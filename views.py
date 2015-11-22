@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseNotFound
-from utils import list_folder, download_ad, serve_file, check_ad
+from utils import list_folder, download_ad, serve_file, check_ad, file_exists
 from django.template import Context, loader
 import time
 
@@ -11,15 +11,28 @@ def index(request):
     c = Context({'ads': ads,})
     return HttpResponse(t.render(c))
 
-def preview(request, path):
-    data = serve_file(path, ad_path)
-    if not data:
+def checker(request, path):
+    if not file_exists(path, ad_path):
         return HttpResponseNotFound('<h1>Page not found</h1>')
 
-    return HttpResponse(data)
+    #checkers = ['now', 'true', 'rand', 'rand', 'false']
+    checkers = ['now', 'true', 'rand', 'rand', 'rand']
 
-def check(request, path):
-    check = check_ad(path)
+
+    t = loader.get_template('checker.html')
+    c = Context({
+        'name': path,
+        'checkers': ','.join(checkers),
+    })
+    return HttpResponse(t.render(c))
+
+def preview(request, path):
+    if not file_exists(path, ad_path):
+        return HttpResponseNotFound('<h1>Page not found</h1>')
+    return HttpResponse(serve_file(path, ad_path))
+
+def check(request, checker, path):
+    check = check_ad(checker, path)
     if check:
         return HttpResponse('ok')
     else:

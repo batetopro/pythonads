@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="margin: 0 auto; width: 75%;" >
+    <h3>Checking ad: {{name}}</h3>
+    <div class="row">
+        <div class="col-md-8" id="ad-preview">
+        </div>
+        <div class="col-md-4">
+            <ul class="list-group" id="checkers-list">
+            </ul>
+            <button type="button" class="btn btn-info pull-right" id="btn-process">Process</button>
+            <button type="button" class="btn btn-default pull-right" style="display: none;" id="btn-ok">OK</button>
+        </div>
+    </div>
+</div>
+<script>
+$(function(){
+    var checkers="{{checkers}}".split(',');
+    build_checkers(checkers);;
+    preview_ad("{{name}}");
+    $('#btn-process').on('click', function(){
+        process_ad(checkers);
+    });
+});
+
+var build_checkers=function(checkers){
+    var i = 0;
+    checkers.forEach(function(url){
+        var cont = $('<li class="list-group-item">Checker No. '+(++i)+'</li>');
+        $('#checkers-list').append(cont);
+    });
+}
+
+var preview_ad=function(url, callback){
+    var iframe = $('<iframe>');
+    iframe.attr('width', '100%');
+    iframe.attr('height', '600');
+    iframe.attr('src', '/preview/' + url);
+    if(callback){
+        iframe.load(function(){
+            callback();
+        });
+    }
+    $('#ad-preview').html(iframe);
+}
+
+var process_ad = function(checkers){
+    if(checkers.length == 0){return;}
+    $('#btn-process').hide();
+    run_checker(0, checkers, 0);
+}
+
+var run_checker=function(idx, checkers, errors){
+    if(idx >= checkers.length){
+        if(errors){
+            $('#btn-ok').addClass('btn-danger');
+            $('#btn-ok').on('click', function(){
+                alert('There are errors and ad can not be processed.');
+            });
+        }else{
+            $('#btn-ok').addClass('btn-success');
+            $('#btn-ok').on('click', function(){alert('Ad processed successfully.');});
+        }
+        $('#btn-ok').show();
+        return;
+    }
+
+    var ctr = 0;
+    var interval = setInterval(function(){
+        if(ctr == 0){
+            $('#checkers-list li').eq(idx).addClass('active');
+        }else{
+            $('#checkers-list li').eq(idx).removeClass('active');
+        }
+        ctr = (ctr + 1) % 2;
+    }, 250);
+
+    $.get('/check/'+checkers[idx]+'/{{name}}', function(resp){
+        clearInterval(interval);
+        if(resp == 'ok'){
+            $('#checkers-list li').eq(idx).addClass('list-group-item-success');
+        }else{
+            $('#checkers-list li').eq(idx).addClass('list-group-item-danger');
+            errors ++;
+        }
+        run_checker(idx + 1, checkers, errors);
+    });
+}
+</script>
+{% endblock content %}

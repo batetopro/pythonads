@@ -6,7 +6,8 @@ from django.conf.urls.defaults import patterns, include, url
 
 urlpatterns = patterns('',
     url(r'^$', 'views.index'),
+    url(r'^checker/(?P<path>.*)$', 'views.checker'),
     url(r'^download$', 'views.download'),
     url(r'^preview/(?P<path>.*)$', 'views.preview'),
-    url(r'^check/(?P<path>.*)$', 'views.check'),
+    url(r'^check/(?P<checker>.*)/(?P<path>.*)$', 'views.check'),
 )
